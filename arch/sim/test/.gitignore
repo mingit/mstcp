@@ -1,7 +1,6 @@
 *.pcap
 files-*
 bake
-buildtop/
-!buildtop/source/ns-3-dce/example/
+buildtop
 core
 exitprocs
