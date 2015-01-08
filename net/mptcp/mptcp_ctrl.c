@@ -58,6 +58,11 @@
 #include <linux/atomic.h>
 #include <linux/sysctl.h>
 
+/*Ming*/
+#include <stdio.h>
+/**/
+
+
 static struct kmem_cache *mptcp_sock_cache __read_mostly;
 static struct kmem_cache *mptcp_cb_cache __read_mostly;
 static struct kmem_cache *mptcp_tw_cache __read_mostly;
@@ -811,6 +816,27 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 
 	/* Do not propagate subflow-errors up to the MPTCP-layer */
 	inet_sk(sub_sk)->recverr = 0;
+
+	/*Ming: Set a different congestion control scheme for each subflow */
+	struct mptcp_cb *mpcb = tcp_sk(meta_sk)->mpcb;
+	u8 cnt_subflows = mpcb->cnt_subflows;
+	char algo[TCP_CA_NAME_MAX];
+	switch(cnt_subflows)
+	{
+		case 1:
+			strcpy(algo, "reno");
+			break;
+		case 2:
+			strcpy(algo, "cubic");
+			break;
+	}
+	if (tcp_set_congestion_control(sub_sk, algo)==0)
+		printf("%s: %s: line=%d: current ca is set to %s\n", __FILE__, __func__, __LINE__, algo);
+	else
+		printf("%s: %s: line=%d: current ca failed to set to %s\n", __FILE__, __func__, __LINE__, algo);
+	struct inet_connection_sock *icsk = inet_csk(sub_sk);
+	printf("%s: %s: line=%d: cnt_subflows=%d, current ca=%s\n\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+	/*Ming*/
 }
 
 int mptcp_backlog_rcv(struct sock *meta_sk, struct sk_buff *skb)
