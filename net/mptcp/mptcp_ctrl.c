@@ -296,7 +296,6 @@ void mptcp_reqsk_new_mptcp(struct request_sock *req,
 			   const struct mptcp_options_received *mopt,
 			   const struct sk_buff *skb)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct mptcp_request_sock *mtreq = mptcp_rsk(req);
 
 	inet_rsk(req)->saw_mpc = 1;
@@ -338,7 +337,6 @@ static void mptcp_set_key_sk(struct sock *sk)
 
 void mptcp_connect_init(struct sock *sk)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct tcp_sock *tp = tcp_sk(sk);
 
 	rcu_read_lock_bh();
@@ -422,7 +420,6 @@ static struct sock *mptcp_syn_recv_sock(struct sock *sk, struct sk_buff *skb,
 					struct request_sock *req,
 					struct dst_entry *dst)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 #if IS_ENABLED(CONFIG_IPV6)
 	if (sk->sk_family == AF_INET6)
 		return tcp_v6_syn_recv_sock(sk, skb, req, dst);
@@ -639,8 +636,10 @@ void mptcp_init_congestion_control(struct sock *sk)
 	return;
 
 use_default:
+	printf("%s:%s:L=%d, use default congestion control name=%s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
 	icsk->icsk_ca_ops = &tcp_init_congestion_ops;
 	tcp_init_congestion_control(sk);
+	printf("%s:%s:L=%d, use default congestion control name=%s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
 }
 
 u32 mptcp_secret[MD5_MESSAGE_BYTES / 4] ____cacheline_aligned;
@@ -796,7 +795,6 @@ static void mptcp_mpcb_inherit_sockopts(struct sock *meta_sk, struct sock *maste
 
 static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	/* IP_TOS also goes to the subflow. */
 	if (inet_sk(sub_sk)->tos != inet_sk(meta_sk)->tos) {
 		inet_sk(sub_sk)->tos = inet_sk(meta_sk)->tos;
@@ -823,6 +821,7 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 	inet_sk(sub_sk)->recverr = 0;
 
 	/*Ming: Set a different congestion control scheme for each subflow */
+	
 	struct mptcp_cb *mpcb = tcp_sk(meta_sk)->mpcb;
 	u8 cnt_subflows = mpcb->cnt_subflows;
 
@@ -830,18 +829,20 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 	switch(cnt_subflows)
 	{
 		case 1:
-			strcpy(algo, "vegas");//reno, highspeed, htcp, cubic, illinois, cong, bic,westwood, vegas
+			strcpy(algo, "cubic");//reno, highspeed, htcp, cubic, illinois, cong, bic,westwood, vegas
 			break;
 		case 2:
-			strcpy(algo, "cong");
+			strcpy(algo, "highspeed");
 			break;
 	}
 	if (tcp_set_congestion_control(sub_sk, algo)==0)
 		printf("%s:%s:L=%d: current ca is set to %s\n", __FILE__, __func__, __LINE__, algo);
 	else
 		printf("%s:%s:L=%d: current ca failed to set to %s\n", __FILE__, __func__, __LINE__, algo);
+
 	struct inet_connection_sock *icsk = inet_csk(sub_sk);
-	printf("%s:%s:L=%d: cnt_subflows=%d, current ca=%s\n-----------\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+	printf("%s:%s:L=%d: cnt_subflows=%d, current CA=%s\n-----------\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+
 	/*Ming*/
 }
 
@@ -1294,7 +1295,6 @@ void mptcp_fallback_meta_sk(struct sock *meta_sk)
 int mptcp_add_sock(struct sock *meta_sk, struct sock *sk, u8 loc_id, u8 rem_id,
 		   gfp_t flags)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct mptcp_cb *mpcb	= tcp_sk(meta_sk)->mpcb;
 	struct tcp_sock *tp	= tcp_sk(sk);
 
@@ -1421,7 +1421,6 @@ void mptcp_del_sock(struct sock *sk)
  */
 void mptcp_update_metasocket(struct sock *sk, struct sock *meta_sk)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	if (tcp_sk(sk)->mpcb->pm_ops->new_session)
 		tcp_sk(sk)->mpcb->pm_ops->new_session(meta_sk);
 
@@ -1931,7 +1930,6 @@ int mptcp_doit(struct sock *sk)
 
 int mptcp_create_master_sk(struct sock *meta_sk, __u64 remote_key, u32 window)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct tcp_sock *master_tp;
 	struct sock *master_sk;
 
@@ -2037,7 +2035,6 @@ struct sock *mptcp_check_req_child(struct sock *meta_sk, struct sock *child,
 				   struct request_sock **prev,
 				   struct mptcp_options_received *mopt)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct tcp_sock *child_tp = tcp_sk(child);
 	struct mptcp_request_sock *mtreq = mptcp_rsk(req);
 	struct mptcp_cb *mpcb = tcp_sk(meta_sk)->mpcb;
@@ -2260,7 +2257,6 @@ void mptcp_tsq_sub_deferred(struct sock *meta_sk)
 void mptcp_join_reqsk_init(struct mptcp_cb *mpcb, struct request_sock *req,
 			   struct sk_buff *skb)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct mptcp_request_sock *mtreq = mptcp_rsk(req);
 	struct mptcp_options_received mopt;
 	u8 mptcp_hash_mac[20];
@@ -2288,7 +2284,6 @@ void mptcp_join_reqsk_init(struct mptcp_cb *mpcb, struct request_sock *req,
 
 void mptcp_reqsk_init(struct request_sock *req, struct sk_buff *skb)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct mptcp_options_received mopt;
 	struct mptcp_request_sock *mreq = mptcp_rsk(req);
 
@@ -2305,7 +2300,6 @@ void mptcp_reqsk_init(struct request_sock *req, struct sk_buff *skb)
 
 int mptcp_conn_request(struct sock *sk, struct sk_buff *skb)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct mptcp_options_received mopt;
 	struct tcp_sock *tp = tcp_sk(sk);
 	__u32 isn = TCP_SKB_CB(skb)->when;
