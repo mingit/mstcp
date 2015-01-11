@@ -636,10 +636,9 @@ void mptcp_init_congestion_control(struct sock *sk)
 	return;
 
 use_default:
-	printf("%s:%s:L=%d, use default congestion control name=%s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
+	printf("%s:%s:L=%d, use default congestion control: %s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
 	icsk->icsk_ca_ops = &tcp_init_congestion_ops;
 	tcp_init_congestion_control(sk);
-	printf("%s:%s:L=%d, use default congestion control name=%s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
 }
 
 u32 mptcp_secret[MD5_MESSAGE_BYTES / 4] ____cacheline_aligned;
