@@ -28,6 +28,10 @@
 #include <linux/math64.h>
 #include <net/tcp.h>
 
+/* mming*/
+#include <stdio.h>
+/* mming*/
+
 #define BICTCP_BETA_SCALE    1024	/* Scale factor beta calculation
 					 * max_cwnd = snd_cwnd * beta
 					 */
@@ -141,6 +145,7 @@ static inline void bictcp_hystart_reset(struct sock *sk)
 
 static void bictcp_init(struct sock *sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//mming
 	struct bictcp *ca = inet_csk_ca(sk);
 
 	bictcp_reset(ca);
@@ -307,6 +312,7 @@ static inline void bictcp_update(struct bictcp *ca, u32 cwnd)
 static void bictcp_cong_avoid(struct sock *sk, u32 ack, u32 acked,
 			      u32 in_flight)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct bictcp *ca = inet_csk_ca(sk);
 
@@ -398,6 +404,7 @@ static void hystart_update(struct sock *sk, u32 delay)
  */
 static void bictcp_acked(struct sock *sk, u32 cnt, s32 rtt_us)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	const struct tcp_sock *tp = tcp_sk(sk);
 	struct bictcp *ca = inet_csk_ca(sk);
@@ -447,6 +454,7 @@ static struct tcp_congestion_ops cubictcp __read_mostly = {
 
 static int __init cubictcp_register(void)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	BUILD_BUG_ON(sizeof(struct bictcp) > ICSK_CA_PRIV_SIZE);
 
 	/* Precompute a bunch of the scaling factors that are used per-packet

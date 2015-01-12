@@ -31,6 +31,11 @@
 
 #include <linux/module.h>
 
+
+/*Ming*/
+#include <stdio.h>
+/**/
+
 /* Scaling is done in the numerator with alpha_scale_num and in the denominator
  * with alpha_scale_den.
  *
@@ -54,6 +59,7 @@ static inline int mptcp_ccc_sk_can_send(const struct sock *sk)
 
 static inline u64 mptcp_get_alpha(struct sock *meta_sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct mptcp_ccc *mptcp_ccc = inet_csk_ca(meta_sk);
 	return mptcp_ccc->alpha;
 }
@@ -83,6 +89,7 @@ static inline void mptcp_set_forced(struct sock *meta_sk, bool force)
 
 static void mptcp_ccc_recalc_alpha(struct sock *sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct mptcp_cb *mpcb = tcp_sk(sk)->mpcb;
 	struct sock *sub_sk;
 	int best_cwnd = 0, best_rtt = 0, can_send = 0;
@@ -163,6 +170,7 @@ exit:
 
 static void mptcp_ccc_init(struct sock *sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	if (mptcp(tcp_sk(sk))) {
 		mptcp_set_forced(mptcp_meta_sk(sk), 0);
 		mptcp_set_alpha(mptcp_meta_sk(sk), 1);
@@ -186,6 +194,7 @@ static void mptcp_ccc_set_state(struct sock *sk, u8 ca_state)
 
 static void mptcp_ccc_cong_avoid(struct sock *sk, u32 ack, u32 acked, u32 in_flight)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct mptcp_cb *mpcb = tp->mpcb;
 	int snd_cwnd;

@@ -610,7 +610,6 @@ static void mptcp_set_state(struct sock *sk)
 
 void mptcp_init_congestion_control(struct sock *sk)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//Ming
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct inet_connection_sock *meta_icsk = inet_csk(mptcp_meta_sk(sk));
 	const struct tcp_congestion_ops *ca = meta_icsk->icsk_ca_ops;
@@ -636,9 +635,19 @@ void mptcp_init_congestion_control(struct sock *sk)
 	return;
 
 use_default:
-	printf("%s:%s:L=%d, use default congestion control: %s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);//Ming
 	icsk->icsk_ca_ops = &tcp_init_congestion_ops;
 	tcp_init_congestion_control(sk);
+
+	/* mming*/
+
+	char algo[TCP_CA_NAME_MAX];
+	strcpy(algo, "");
+	if (strcmp(tcp_init_congestion_ops.name, algo) == 0)
+		printf("%s:%s:L=%d, use default congestion control: CA is NULL\n", __FILE__, __func__, __LINE__);
+	else
+		printf("%s:%s:L=%d, use default congestion control: CA is not NULL. CA is %s\n", __FILE__, __func__, __LINE__, tcp_init_congestion_ops.name);
+
+	/*mming*/
 }
 
 u32 mptcp_secret[MD5_MESSAGE_BYTES / 4] ____cacheline_aligned;
@@ -834,13 +843,12 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 			strcpy(algo, "highspeed");
 			break;
 	}
-	if (tcp_set_congestion_control(sub_sk, algo)==0)
-		printf("%s:%s:L=%d: current ca is set to %s\n", __FILE__, __func__, __LINE__, algo);
-	else
-		printf("%s:%s:L=%d: current ca failed to set to %s\n", __FILE__, __func__, __LINE__, algo);
 
 	struct inet_connection_sock *icsk = inet_csk(sub_sk);
-	printf("%s:%s:L=%d: cnt_subflows=%d, current CA=%s\n-----------\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+	printf("%s:%s:L=%d: cnt_subflows=%d, CA = %s\n-----------\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+
+	if (tcp_set_congestion_control(sub_sk, algo)!=0)
+		printf("%s:%s:L=%d: failed to set CA to %s\n", __FILE__, __func__, __LINE__, algo);
 
 	/*Ming*/
 }

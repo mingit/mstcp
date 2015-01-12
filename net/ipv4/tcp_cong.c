@@ -15,6 +15,10 @@
 #include <linux/gfp.h>
 #include <net/tcp.h>
 
+/* mming*/
+#include <stdio.h>
+/* mming*/
+
 static DEFINE_SPINLOCK(tcp_cong_list_lock);
 static LIST_HEAD(tcp_cong_list);
 
@@ -67,6 +71,7 @@ EXPORT_SYMBOL_GPL(tcp_register_congestion_control);
  */
 void tcp_unregister_congestion_control(struct tcp_congestion_ops *ca)
 {
+	//printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	spin_lock(&tcp_cong_list_lock);
 	list_del_rcu(&ca->list);
 	spin_unlock(&tcp_cong_list_lock);
@@ -76,6 +81,7 @@ EXPORT_SYMBOL_GPL(tcp_unregister_congestion_control);
 /* Assign choice of congestion control. */
 void tcp_init_congestion_control(struct sock *sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//mming
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct tcp_congestion_ops *ca;
 
@@ -100,6 +106,7 @@ void tcp_init_congestion_control(struct sock *sk)
 /* Manage refcounts on socket close. */
 void tcp_cleanup_congestion_control(struct sock *sk)
 {
+	//printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	if (icsk->icsk_ca_ops->release)
@@ -110,6 +117,7 @@ void tcp_cleanup_congestion_control(struct sock *sk)
 /* Used by sysctl to change default congestion control */
 int tcp_set_default_congestion_control(const char *name)
 {
+	printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);//mming
 	struct tcp_congestion_ops *ca;
 	int ret = -ENOENT;
 
@@ -138,6 +146,7 @@ int tcp_set_default_congestion_control(const char *name)
 /* Set default value from kernel configuration at bootup */
 static int __init tcp_congestion_default(void)
 {
+	printf("********************%s:%s:L=%d: CONFIG_DEFAULT_TCP_CONG=%s\n", __FILE__, __func__, __LINE__, CONFIG_DEFAULT_TCP_CONG);
 	return tcp_set_default_congestion_control(CONFIG_DEFAULT_TCP_CONG);
 }
 late_initcall(tcp_congestion_default);
@@ -146,6 +155,7 @@ late_initcall(tcp_congestion_default);
 /* Build string with list of available congestion control values */
 void tcp_get_available_congestion_control(char *buf, size_t maxlen)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	size_t offs = 0;
 
@@ -154,6 +164,7 @@ void tcp_get_available_congestion_control(char *buf, size_t maxlen)
 		offs += snprintf(buf + offs, maxlen - offs,
 				 "%s%s",
 				 offs == 0 ? "" : " ", ca->name);
+	printf("%s:%s:L=%d: ca-name=%s\n", __FILE__, __func__, __LINE__, ca->name);
 
 	}
 	rcu_read_unlock();
@@ -162,6 +173,7 @@ void tcp_get_available_congestion_control(char *buf, size_t maxlen)
 /* Get current default congestion control */
 void tcp_get_default_congestion_control(char *name)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	/* We will always have reno... */
 	BUG_ON(list_empty(&tcp_cong_list));
@@ -175,6 +187,7 @@ void tcp_get_default_congestion_control(char *name)
 /* Built list of non-restricted congestion control values */
 void tcp_get_allowed_congestion_control(char *buf, size_t maxlen)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	size_t offs = 0;
 
@@ -194,6 +207,7 @@ void tcp_get_allowed_congestion_control(char *buf, size_t maxlen)
 /* Change list of non-restricted congestion control */
 int tcp_set_allowed_congestion_control(char *val)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	char *saved_clone, *clone, *name;
 	int ret = 0;
@@ -234,6 +248,7 @@ out:
 /* Change congestion control for socket */
 int tcp_set_congestion_control(struct sock *sk, const char *name)
 {
+	printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct tcp_congestion_ops *ca;
 	int err = 0;
@@ -243,8 +258,10 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 
 	/* no change asking for existing value */
 	if (ca == icsk->icsk_ca_ops)
+	{
+		printf("%s:%s:L=%d:ca == icsk->icsk_ca_ops\n", __FILE__, __func__, __LINE__);//mming
 		goto out;
-
+	}
 #ifdef CONFIG_MODULES
 	/* not found attempt to autoload module */
 	if (!ca && capable(CAP_NET_ADMIN)) {
@@ -255,8 +272,9 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 	}
 #endif
 	if (!ca)
+	{
 		err = -ENOENT;
-
+	}
 	else if (!((ca->flags & TCP_CONG_NON_RESTRICTED) ||
 		   ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN)))
 		err = -EPERM;
@@ -267,12 +285,13 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 	else {
 		tcp_cleanup_congestion_control(sk);
 		icsk->icsk_ca_ops = ca;
-
 		if (sk->sk_state != TCP_CLOSE && icsk->icsk_ca_ops->init)
 			icsk->icsk_ca_ops->init(sk);
 	}
  out:
 	rcu_read_unlock();
+	if (err != 0)
+		printf("%s:%s:L=%d !!ERROR!!: err=%d\n", __FILE__, __func__, __LINE__, err);//mming
 	return err;
 }
 
@@ -281,6 +300,7 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
  */
 bool tcp_is_cwnd_limited(const struct sock *sk, u32 in_flight)
 {
+	//printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	const struct tcp_sock *tp = tcp_sk(sk);
 	u32 left;
 
@@ -307,6 +327,7 @@ EXPORT_SYMBOL_GPL(tcp_is_cwnd_limited);
  */
 int tcp_slow_start(struct tcp_sock *tp, u32 acked)
 {
+	//printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	u32 cwnd = tp->snd_cwnd + acked;
 
 	if (cwnd > tp->snd_ssthresh)
@@ -320,6 +341,7 @@ EXPORT_SYMBOL_GPL(tcp_slow_start);
 /* In theory this is tp->snd_cwnd += 1 / tp->snd_cwnd (or alternative w) */
 void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	if (tp->snd_cwnd_cnt >= w) {
 		if (tp->snd_cwnd < tp->snd_cwnd_clamp)
 			tp->snd_cwnd++;
@@ -339,6 +361,7 @@ EXPORT_SYMBOL_GPL(tcp_cong_avoid_ai);
  */
 void tcp_reno_cong_avoid(struct sock *sk, u32 ack, u32 acked, u32 in_flight)
 {
+	//printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//mming
 	struct tcp_sock *tp = tcp_sk(sk);
 
 	if (!tcp_is_cwnd_limited(sk, in_flight))
@@ -356,6 +379,7 @@ EXPORT_SYMBOL_GPL(tcp_reno_cong_avoid);
 /* Slow start threshold is half the congestion window (min 2) */
 u32 tcp_reno_ssthresh(struct sock *sk)
 {
+	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//mming
 	const struct tcp_sock *tp = tcp_sk(sk);
 	return max(tp->snd_cwnd >> 1U, 2U);
 }
