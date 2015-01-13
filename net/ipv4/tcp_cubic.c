@@ -145,7 +145,6 @@ static inline void bictcp_hystart_reset(struct sock *sk)
 
 static void bictcp_init(struct sock *sk)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);//mming
 	struct bictcp *ca = inet_csk_ca(sk);
 
 	bictcp_reset(ca);
@@ -454,7 +453,6 @@ static struct tcp_congestion_ops cubictcp __read_mostly = {
 
 static int __init cubictcp_register(void)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	BUILD_BUG_ON(sizeof(struct bictcp) > ICSK_CA_PRIV_SIZE);
 
 	/* Precompute a bunch of the scaling factors that are used per-packet

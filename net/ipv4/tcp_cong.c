@@ -27,9 +27,12 @@ static struct tcp_congestion_ops *tcp_ca_find(const char *name)
 {
 	struct tcp_congestion_ops *e;
 
-	list_for_each_entry_rcu(e, &tcp_cong_list, list) {
+	list_for_each_entry_rcu(e, &tcp_cong_list, list) 
+	{
 		if (strcmp(e->name, name) == 0)
+		{
 			return e;
+		}
 	}
 
 	return NULL;
@@ -123,6 +126,7 @@ int tcp_set_default_congestion_control(const char *name)
 
 	spin_lock(&tcp_cong_list_lock);
 	ca = tcp_ca_find(name);
+	printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);//mming
 #ifdef CONFIG_MODULES
 	if (!ca && capable(CAP_NET_ADMIN)) {
 		spin_unlock(&tcp_cong_list_lock);
@@ -130,6 +134,7 @@ int tcp_set_default_congestion_control(const char *name)
 		request_module("tcp_%s", name);
 		spin_lock(&tcp_cong_list_lock);
 		ca = tcp_ca_find(name);
+	printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);//mming
 	}
 #endif
 
@@ -137,8 +142,10 @@ int tcp_set_default_congestion_control(const char *name)
 		ca->flags |= TCP_CONG_NON_RESTRICTED;	/* default is always allowed */
 		list_move(&ca->list, &tcp_cong_list);
 		ret = 0;
+		printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);//mming
 	}
 	spin_unlock(&tcp_cong_list_lock);
+	printf("%s:%s:L=%d: ca_name=%s,ret=%d\n", __FILE__, __func__, __LINE__, name, ret);//mming
 
 	return ret;
 }
@@ -146,7 +153,6 @@ int tcp_set_default_congestion_control(const char *name)
 /* Set default value from kernel configuration at bootup */
 static int __init tcp_congestion_default(void)
 {
-	printf("********************%s:%s:L=%d: CONFIG_DEFAULT_TCP_CONG=%s\n", __FILE__, __func__, __LINE__, CONFIG_DEFAULT_TCP_CONG);
 	return tcp_set_default_congestion_control(CONFIG_DEFAULT_TCP_CONG);
 }
 late_initcall(tcp_congestion_default);
@@ -173,7 +179,6 @@ void tcp_get_available_congestion_control(char *buf, size_t maxlen)
 /* Get current default congestion control */
 void tcp_get_default_congestion_control(char *name)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	/* We will always have reno... */
 	BUG_ON(list_empty(&tcp_cong_list));
@@ -187,7 +192,6 @@ void tcp_get_default_congestion_control(char *name)
 /* Built list of non-restricted congestion control values */
 void tcp_get_allowed_congestion_control(char *buf, size_t maxlen)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	size_t offs = 0;
 
@@ -207,7 +211,6 @@ void tcp_get_allowed_congestion_control(char *buf, size_t maxlen)
 /* Change list of non-restricted congestion control */
 int tcp_set_allowed_congestion_control(char *val)
 {
-	printf("%s:%s:L=%d\n", __FILE__, __func__, __LINE__);
 	struct tcp_congestion_ops *ca;
 	char *saved_clone, *clone, *name;
 	int ret = 0;
@@ -248,7 +251,6 @@ out:
 /* Change congestion control for socket */
 int tcp_set_congestion_control(struct sock *sk, const char *name)
 {
-	printf("%s:%s:L=%d: ca_name=%s\n", __FILE__, __func__, __LINE__, name);
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct tcp_congestion_ops *ca;
 	int err = 0;
@@ -258,10 +260,8 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 
 	/* no change asking for existing value */
 	if (ca == icsk->icsk_ca_ops)
-	{
-		printf("%s:%s:L=%d:ca == icsk->icsk_ca_ops\n", __FILE__, __func__, __LINE__);//mming
 		goto out;
-	}
+
 #ifdef CONFIG_MODULES
 	/* not found attempt to autoload module */
 	if (!ca && capable(CAP_NET_ADMIN)) {
@@ -292,6 +292,9 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 	rcu_read_unlock();
 	if (err != 0)
 		printf("%s:%s:L=%d !!ERROR!!: err=%d\n", __FILE__, __func__, __LINE__, err);//mming
+	else
+		printf("%s:%s:L=%d: CA = %s\n", __FILE__, __func__, __LINE__, name);
+
 	return err;
 }
 

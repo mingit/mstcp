@@ -829,7 +829,7 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 	inet_sk(sub_sk)->recverr = 0;
 
 	/*Ming: Set a different congestion control scheme for each subflow */
-	
+/*	
 	struct mptcp_cb *mpcb = tcp_sk(meta_sk)->mpcb;
 	u8 cnt_subflows = mpcb->cnt_subflows;
 
@@ -844,12 +844,14 @@ static void mptcp_sub_inherit_sockopts(struct sock *meta_sk, struct sock *sub_sk
 			break;
 	}
 
-	struct inet_connection_sock *icsk = inet_csk(sub_sk);
-	printf("%s:%s:L=%d: cnt_subflows=%d, CA = %s\n-----------\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
-
 	if (tcp_set_congestion_control(sub_sk, algo)!=0)
 		printf("%s:%s:L=%d: failed to set CA to %s\n", __FILE__, __func__, __LINE__, algo);
-
+	else
+	{
+		struct inet_connection_sock *icsk = inet_csk(sub_sk);
+		printf("%s:%s:L=%d: cnt_subflows=%d, confirm CA = %s\n---\n\n", __FILE__, __func__, __LINE__, cnt_subflows, icsk->icsk_ca_ops->name);
+	}
+*/
 	/*Ming*/
 }
 
